@@ -67,6 +67,16 @@ export function LandingPage({ onStart }: LandingPageProps) {
           Made by Love Booth
         </p>
         <p className="text-xs text-muted-foreground">
+          <a 
+            href="https://lovebooth-sigma.vercel.app/" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="text-primary hover:underline"
+          >
+            lovebooth-sigma.vercel.app
+          </a>
+        </p>
+        <p className="text-xs text-muted-foreground">
           © {new Date().getFullYear()} Love Booth. All rights reserved.
         </p>
         <p className="text-xs text-muted-foreground">
