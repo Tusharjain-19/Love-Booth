@@ -520,6 +520,9 @@ export function CaptureMode({ onPhotosReady, onBack }: CaptureModeProps) {
               <Upload className="w-5 h-5 mr-2" />
               Upload {requiredPhotos} Photos
             </Button>
+            <p className="text-[10px] text-muted-foreground text-center px-4">
+              Tip: Use Google Photos to select multiple images easily.
+            </p>
           </div>
 
           <input
