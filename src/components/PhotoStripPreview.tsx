@@ -42,7 +42,7 @@ export function PhotoStripPreview({
   // New Features State
   const [customText, setCustomText] = useState(new Date().toLocaleDateString());
   const [borderStyle, setBorderStyle] = useState<"white" | "black" | "pastel">("white");
-  const [showWatermark, setShowWatermark] = useState(false);
+  const [showWatermark, setShowWatermark] = useState(true);
 
   // Use the download hook for WebView-compatible downloads
   const { downloadImage } = useImageDownload();
