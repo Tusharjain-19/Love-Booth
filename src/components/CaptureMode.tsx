@@ -195,7 +195,7 @@ export function CaptureMode({ onPhotosReady, onBack }: CaptureModeProps) {
     }
     
     if (files.length !== requiredPhotos) {
-      toast.error(`Please select exactly ${requiredPhotos} photos`);
+      toast.error(`Selected ${files.length} photos. Please select exactly ${requiredPhotos}.`);
       // Reset input to allow re-selection
       if (fileInputRef.current) fileInputRef.current.value = "";
       return;
@@ -295,6 +295,10 @@ export function CaptureMode({ onPhotosReady, onBack }: CaptureModeProps) {
           // Read as data URL for maximum compatibility
           reader.readAsDataURL(file);
         });
+        } catch (error) {
+           console.error("Error processing file:", error);
+           return "";
+        }
       })
     ).then(processedPhotos => {
       // Reset input for future uploads
@@ -515,7 +519,7 @@ export function CaptureMode({ onPhotosReady, onBack }: CaptureModeProps) {
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/png,image/jpeg,image/jpg,image/webp,image/heic,image/heif"
+            accept="image/*"
             multiple
             onChange={handleFileUpload}
             className="hidden"
