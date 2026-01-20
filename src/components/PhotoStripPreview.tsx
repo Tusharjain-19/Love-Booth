@@ -338,51 +338,76 @@ export function PhotoStripPreview({
   /**
    * Fallback to system print dialog
    */
+  /**
+   * Fallback to system print dialog
+   * Uses hidden iframe for better WebView compatibility
+   */
   const handleSystemPrint = async () => {
     try {
       const dataUrl = await generateHighQualityStrip();
 
-      const printWindow = window.open('', '_blank');
-      if (!printWindow) {
-        toast.error("Please allow popups to print");
-        return;
+      // Create a hidden iframe
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      document.body.appendChild(iframe);
+      
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+      if (!iframeDoc || !iframe.contentWindow) {
+        throw new Error("Could not create print frame");
       }
 
-      printWindow.document.write(`
+      iframeDoc.write(`
         <!DOCTYPE html>
         <html>
           <head>
             <title>Print Photo Strip</title>
             <style>
-              * { margin: 0; padding: 0; box-sizing: border-box; }
               body { 
+                margin: 0; 
                 display: flex; 
                 justify-content: center; 
                 align-items: center; 
-                min-height: 100vh;
-                background: white;
+                height: 100vh;
               }
               img { 
                 max-width: 100%; 
-                max-height: 100vh; 
-                object-fit: contain;
+                height: auto; 
+                max-height: 100vh;
               }
               @media print {
-                body { margin: 0; }
-                img { 
-                  width: 100%; 
-                  height: auto; 
-                  page-break-inside: avoid;
-                }
+                body { display: block; }
+                img { width: 100%; height: auto; }
               }
             </style>
           </head>
           <body>
-            <img src="${dataUrl}" alt="Photo Strip" onload="window.print(); window.close();" />
+            <img src="${dataUrl}" alt="Photo Strip" />
           </body>
         </html>
       `);
-      printWindow.document.close();
+      iframeDoc.close();
+
+      // Wait for image to load then print
+      const img = iframeDoc.querySelector('img');
+      if (img) {
+        img.onload = () => {
+          try {
+            iframe.contentWindow?.focus();
+            iframe.contentWindow?.print();
+          } catch (e) {
+            console.error("Frame print error:", e);
+            toast.error("Print failed. Please try downloading.");
+          } finally {
+             // Cleanup after a delay to ensure print dialog has opened
+             setTimeout(() => {
+               document.body.removeChild(iframe);
+             }, 2000);
+          }
+        };
+      } else {
+         document.body.removeChild(iframe);
+      }
+
     } catch (error) {
       console.error("Print error:", error);
       toast.error("Failed to print. Please try again.");
