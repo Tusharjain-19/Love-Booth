@@ -15,6 +15,7 @@ import { StripLayoutSelector, StripLayout, STRIP_LAYOUTS } from "@/components/St
 import { cn } from "@/lib/utils";
 import { useCamera, CameraPermissionState } from "@/hooks/useCamera";
 import appBackground from "@/assets/app-background.png";
+import heic2any from "heic2any";
 
 interface CaptureModeProps {
   onPhotosReady: (photos: string[], layout: string) => void;
@@ -201,11 +202,12 @@ export function CaptureMode({ onPhotosReady, onBack }: CaptureModeProps) {
     }
 
     // Accept common image MIME types including those from mobile galleries
-    const validFiles = files.filter(f => 
-      f.type.startsWith("image/") || 
-      // Some mobile galleries don't set proper MIME types
-      /\.(jpg|jpeg|png|gif|webp|heic|heif|bmp)$/i.test(f.name)
-    );
+    // Also loosen validation for files that might have empty type but valid extension
+    const validFiles = files.filter(f => {
+      const isImage = f.type.startsWith("image/");
+      const hasImageExt = /\.(jpg|jpeg|png|gif|webp|heic|heif|bmp)$/i.test(f.name);
+      return isImage || hasImageExt;
+    });
     
     if (validFiles.length !== files.length) {
       toast.error("Please select only image files");
@@ -215,11 +217,30 @@ export function CaptureMode({ onPhotosReady, onBack }: CaptureModeProps) {
 
     toast.info("Processing images...");
 
-    // Process images using FileReader for better mobile compatibility
+    // Process images using FileReader/heic2any for better mobile compatibility
     Promise.all(
-      validFiles.map(file => {
-        return new Promise<string>((resolve) => {
-          const reader = new FileReader();
+      validFiles.map(async (file) => {
+        try {
+          // Check if it's a HEIC file
+          if (file.type.toLowerCase().includes('heic') || file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')) {
+             try {
+               const convertedBlob = await heic2any({
+                 blob: file,
+                 toType: "image/jpeg",
+                 quality: 0.8
+               });
+               
+               // Handle result which could be Blob or Blob[]
+               const blob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+               file = new File([blob], file.name.replace(/\.heic$/i, ".jpg"), { type: "image/jpeg" });
+             } catch (e) {
+               console.error("HEIC conversion failed:", e);
+               // Continue to try standard loading if conversion fails failure
+             }
+          }
+
+          return new Promise<string>((resolve) => {
+            const reader = new FileReader();
           
           reader.onload = (readerEvent) => {
             const dataUrl = readerEvent.target?.result as string;
@@ -494,7 +515,7 @@ export function CaptureMode({ onPhotosReady, onBack }: CaptureModeProps) {
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*"
+            accept="image/png,image/jpeg,image/jpg,image/webp,image/heic,image/heif"
             multiple
             onChange={handleFileUpload}
             className="hidden"
