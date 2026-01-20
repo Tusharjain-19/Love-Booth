@@ -17,6 +17,46 @@ import { useImageDownload } from "@/hooks/useImageDownload";
 import type { BluetoothDevice } from "@/types/bluetooth.d";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { 
+  DndContext, 
+  closestCenter, 
+  KeyboardSensor, 
+  PointerSensor, 
+  useSensor, 
+  useSensors,
+  DragEndEvent
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  rectSortingStrategy,
+  useSortable
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+// Sortable Photo Component
+function SortablePhoto({ id, src, className }: { id: string, src: string, className?: string }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    touchAction: 'none' // Important for mobile dragging
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="relative cursor-move">
+      <img src={src} className={className} alt="Draggable photo" />
+    </div>
+  );
+}
 interface PhotoStripPreviewProps {
   photos: string[];
   layout: string;
@@ -43,6 +83,35 @@ export function PhotoStripPreview({
   const [customText, setCustomText] = useState(new Date().toLocaleDateString());
   const [borderStyle, setBorderStyle] = useState<"white" | "black" | "pastel">("white");
   const [showWatermark, setShowWatermark] = useState(true);
+
+  // Drag and Drop State
+  const [orderedPhotos, setOrderedPhotos] = useState(() => 
+    photos.map((url, index) => ({ id: `p-${index}`, url }))
+  );
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+         distance: 8, // Require slight movement to prevent accidental drags on clicks
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setOrderedPhotos((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
 
   // Use the download hook for WebView-compatible downloads
   const { downloadImage } = useImageDownload();
@@ -104,15 +173,15 @@ export function PhotoStripPreview({
 
     // Load all images with error handling
     const loadedImages = await Promise.all(
-      photos.map(
-        (src) =>
+      orderedPhotos.map(
+        (p) =>
           new Promise<HTMLImageElement>((resolve, reject) => {
             const img = new Image();
             // Required for canvas operations with data URLs
             img.crossOrigin = "anonymous";
             img.onload = () => resolve(img);
             img.onerror = () => reject(new Error("Failed to load image"));
-            img.src = src;
+            img.src = p.url;
           })
       )
     );
@@ -180,7 +249,7 @@ export function PhotoStripPreview({
 
     // Return as PNG data URL with maximum quality
     return canvas.toDataURL("image/png", 1.0);
-  }, [photos, layout, isGrayscale, customText, borderStyle, showWatermark]);
+  }, [photos, orderedPhotos, layout, isGrayscale, customText, borderStyle, showWatermark]);
 
   /**
    * Handle download - MUST be called from user gesture (click)
@@ -454,17 +523,28 @@ export function PhotoStripPreview({
         <div className={cn(
           layout === "grid-4" ? "grid grid-cols-2 gap-2" : "flex flex-col gap-2"
         )}>
-          {photos.map((photo, i) => (
-            <img
-              key={i}
-              src={photo}
-              alt={`Photo ${i + 1}`}
-              className={cn(photoClass, 
-                layout === "wide-3" ? "aspect-[16/6]" : "aspect-square", 
-                "rounded"
-              )}
-            />
-          ))}
+          <DndContext 
+            sensors={sensors} 
+            collisionDetection={closestCenter} 
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext 
+              items={orderedPhotos.map(p => p.id)} 
+              strategy={rectSortingStrategy}
+            >
+              {orderedPhotos.map((photo, i) => (
+                <SortablePhoto
+                  key={photo.id}
+                  id={photo.id}
+                  src={photo.url}
+                  className={cn(photoClass, 
+                    layout === "wide-3" ? "aspect-[16/6]" : "aspect-square", 
+                    "rounded"
+                  )}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
         </div>
         
         {/* Custom Text Overlay */}
@@ -629,7 +709,7 @@ export function PhotoStripPreview({
         )}
 
         <p className="text-sm text-muted-foreground mt-4">
-          High quality PNG • Print-ready
+           Drag photos to reorder • High quality PNG
         </p>
 
 
