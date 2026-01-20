@@ -32,9 +32,7 @@ export function LandingPage({ onStart }: LandingPageProps) {
             Turn moments into photo strips.
           </h1>
           
-          <p className="text-lg text-muted-foreground mb-8">
-            Perfect for friends, couples, and events.
-          </p>
+
 
           <Button
             onClick={onStart}
