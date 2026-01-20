@@ -29,11 +29,11 @@ export function LandingPage({ onStart }: LandingPageProps) {
       <main className="flex-1 flex flex-col items-center justify-center px-6 pb-20 relative z-10">
         <div className="text-center max-w-md">
           <h1 className="text-4xl md:text-5xl font-display font-bold text-foreground mb-4">
-            Love Booth
+            Turn moments into photo strips.
           </h1>
           
           <p className="text-lg text-muted-foreground mb-8">
-            Create beautiful photo strips in seconds. Upload or capture 3-4 photos.
+            Perfect for friends, couples, and events.
           </p>
 
           <Button
@@ -42,7 +42,7 @@ export function LandingPage({ onStart }: LandingPageProps) {
             className="text-lg px-8 py-6 rounded-full"
           >
             <Camera className="w-5 h-5 mr-2" />
-            Start Creating
+            Make a Photo Strip
           </Button>
 
           {/* Features */}
@@ -66,7 +66,7 @@ export function LandingPage({ onStart }: LandingPageProps) {
       {/* Footer */}
       <footer className="p-6 text-center space-y-2 relative z-10">
         <p className="text-sm text-muted-foreground">
-          Made with <Heart className="w-4 h-4 inline text-primary fill-primary" /> by Love Booth
+          Made by Love Booth
         </p>
         <p className="text-xs text-muted-foreground">
           © {new Date().getFullYear()} Love Booth. All rights reserved.

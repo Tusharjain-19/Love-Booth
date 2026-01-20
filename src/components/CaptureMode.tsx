@@ -496,6 +496,12 @@ export function CaptureMode({ onPhotosReady, onBack }: CaptureModeProps) {
           />
 
           <div className="mt-8 space-y-3">
+             <div className="text-center mb-2">
+                <span className="text-sm font-medium text-primary bg-primary/10 px-3 py-1 rounded-full">
+                  This layout needs {selectedLayout.photoCount} photos
+                </span>
+             </div>
+
             <Button
               onClick={startCamera}
               size="lg"

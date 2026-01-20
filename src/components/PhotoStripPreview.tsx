@@ -9,11 +9,14 @@
  */
 import { useState, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Download, RotateCcw, Palette, MessageSquare, CheckCircle2, ExternalLink, Printer, Bluetooth, Loader2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { ArrowLeft, Download, RotateCcw, Palette, MessageSquare, CheckCircle2, ExternalLink, Printer, Bluetooth, Loader2, Type, Frame } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useImageDownload } from "@/hooks/useImageDownload";
 import type { BluetoothDevice } from "@/types/bluetooth.d";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 interface PhotoStripPreviewProps {
   photos: string[];
   layout: string;
@@ -35,6 +38,11 @@ export function PhotoStripPreview({
   const [isScanning, setIsScanning] = useState(false);
   const [connectedDevice, setConnectedDevice] = useState<BluetoothDevice | null>(null);
   const stripRef = useRef<HTMLDivElement>(null);
+
+  // New Features State
+  const [customText, setCustomText] = useState(new Date().toLocaleDateString());
+  const [borderStyle, setBorderStyle] = useState<"white" | "black" | "pastel">("white");
+  const [showWatermark, setShowWatermark] = useState(false);
 
   // Use the download hook for WebView-compatible downloads
   const { downloadImage } = useImageDownload();
@@ -84,8 +92,14 @@ export function PhotoStripPreview({
     canvas.width = canvasWidth;
     canvas.height = canvasHeight;
 
-    // White background
-    ctx.fillStyle = "#ffffff";
+    // Background color based on border style
+    if (borderStyle === "black") {
+      ctx.fillStyle = "#1a1a1a";
+    } else if (borderStyle === "pastel") {
+      ctx.fillStyle = "#fffbf0"; // Soft warm pastel
+    } else {
+      ctx.fillStyle = "#ffffff";
+    }
     ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
     // Load all images with error handling
@@ -145,15 +159,28 @@ export function PhotoStripPreview({
       ctx.putImageData(imageData, 0, 0);
     }
 
-    // Add watermark
-    ctx.fillStyle = isGrayscale ? "#666666" : "#e91e63";
-    ctx.font = `${20 * scale}px 'Inter', sans-serif`;
-    ctx.textAlign = "center";
-    ctx.fillText("Love Booth", canvasWidth / 2, canvasHeight - padding / 2);
+    // Draw Custom Text
+    if (customText) {
+      ctx.fillStyle = borderStyle === "black" ? "#ffffff" : "#1a1a1a";
+      ctx.font = `500 ${24 * scale}px 'Inter', sans-serif`;
+      ctx.textAlign = "center";
+      
+      // Calculate position (bottom of strip)
+      const textY = canvasHeight - (showWatermark ? padding * 1.5 : padding * 0.8);
+      ctx.fillText(customText, canvasWidth / 2, textY);
+    }
+
+    // Add watermark (Optional)
+    if (showWatermark) {
+      ctx.fillStyle = borderStyle === "black" ? "#666666" : "#999999";
+      ctx.font = `${14 * scale}px 'Inter', sans-serif`;
+      ctx.textAlign = "center";
+      ctx.fillText("Made by Love Booth", canvasWidth / 2, canvasHeight - padding / 3);
+    }
 
     // Return as PNG data URL with maximum quality
     return canvas.toDataURL("image/png", 1.0);
-  }, [photos, layout, isGrayscale]);
+  }, [photos, layout, isGrayscale, customText, borderStyle, showWatermark]);
 
   /**
    * Handle download - MUST be called from user gesture (click)
@@ -389,64 +416,51 @@ export function PhotoStripPreview({
       isGrayscale && "grayscale-filter"
     );
 
-    if (layout === "strip-3" || layout === "strip-4") {
-      return (
-        <div className="photo-strip p-3 rounded-lg w-32 mx-auto" ref={stripRef}>
-          <div className="flex flex-col gap-2">
-            {photos.map((photo, i) => (
-              <img
-                key={i}
-                src={photo}
-                alt={`Photo ${i + 1}`}
-                className={cn(photoClass, "aspect-square rounded")}
-              />
-            ))}
-          </div>
-          <div className="block text-center text-[10px] text-muted-foreground mt-2">
-            Love Booth
-          </div>
-        </div>
-      );
-    }
+    const bgClass = cn(
+      "photo-strip p-3 rounded-lg mx-auto transition-colors",
+      borderStyle === "black" ? "bg-[#1a1a1a]" : 
+      borderStyle === "pastel" ? "bg-[#fffbf0]" : "bg-white"
+    );
 
-    if (layout === "grid-4") {
-      return (
-        <div className="photo-strip p-3 rounded-lg w-56 mx-auto" ref={stripRef}>
-          <div className="grid grid-cols-2 gap-2">
-            {photos.map((photo, i) => (
-              <img
-                key={i}
-                src={photo}
-                alt={`Photo ${i + 1}`}
-                className={cn(photoClass, "aspect-square rounded")}
-              />
-            ))}
-          </div>
-          <div className="block text-center text-[10px] text-muted-foreground mt-2">
-            Love Booth
-          </div>
-        </div>
-      );
-    }
+    const textColorClass = borderStyle === "black" ? "text-white/90" : "text-foreground/90";
 
-    // wide-3
-    return (
-      <div className="photo-strip p-3 rounded-lg w-64 mx-auto" ref={stripRef}>
-        <div className="flex flex-col gap-2">
+    const renderContents = (widthClass: string) => (
+      <div className={cn(bgClass, widthClass)} ref={stripRef}>
+        <div className={cn(
+          layout === "grid-4" ? "grid grid-cols-2 gap-2" : "flex flex-col gap-2"
+        )}>
           {photos.map((photo, i) => (
             <img
               key={i}
               src={photo}
               alt={`Photo ${i + 1}`}
-              className={cn(photoClass, "aspect-[16/6] rounded")}
+              className={cn(photoClass, 
+                layout === "wide-3" ? "aspect-[16/6]" : "aspect-square", 
+                "rounded"
+              )}
             />
           ))}
         </div>
-        <div className="block text-center text-[10px] text-muted-foreground mt-2">
-          Love Booth
-        </div>
+        
+        {/* Custom Text Overlay */}
+        {customText && (
+          <div className={cn("text-center font-medium mt-3 font-sans truncate px-2", textColorClass)}>
+             {customText}
+          </div>
+        )}
+
+        {/* Optional Watermark */}
+        {showWatermark && (
+          <div className="block text-center text-[10px] text-muted-foreground mt-1 opacity-70">
+            Made by Love Booth
+          </div>
+        )}
       </div>
     );
+
+    if (layout === "strip-3" || layout === "strip-4") return renderContents("w-32");
+    if (layout === "grid-4") return renderContents("w-56");
+    return renderContents("w-64");
   };
 
   return (
@@ -465,25 +479,92 @@ export function PhotoStripPreview({
       <main className="flex-1 flex flex-col items-center justify-center p-6">
         <h2 className="text-2xl font-display font-bold mb-6">Your Photo Strip</h2>
 
-        {/* Color Mode Toggle */}
-        <div className="flex gap-2 mb-6">
-          <Button
-            variant={colorMode === "color" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setColorMode("color")}
-            className="rounded-full"
-          >
-            <Palette className="w-4 h-4 mr-2" />
-            Color
-          </Button>
-          <Button
-            variant={colorMode === "bw" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setColorMode("bw")}
-            className="rounded-full"
-          >
-            B&W
-          </Button>
+        {/* Controls Section */}
+        <div className="w-full max-w-sm space-y-6 mb-8">
+          
+          {/* 1. Custom Text */}
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground uppercase tracking-wider">Date & Text</Label>
+            <div className="flex gap-2">
+              <Input 
+                value={customText}
+                onChange={(e) => setCustomText(e.target.value.slice(0, 25))}
+                placeholder="Add a date or memory..."
+                className="bg-card/50"
+              />
+              {customText && (
+                <Button variant="ghost" size="icon" onClick={() => setCustomText("")}>
+                   <RotateCcw className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
+            <p className="text-[10px] text-muted-foreground text-right">{customText.length}/25</p>
+          </div>
+
+          {/* 2. Border Styles */}
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground uppercase tracking-wider">Frame Style</Label>
+            <div className="grid grid-cols-3 gap-2">
+              <Button
+                variant={borderStyle === "white" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setBorderStyle("white")}
+                className="w-full text-xs"
+              >
+                Classic
+              </Button>
+              <Button
+                variant={borderStyle === "black" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setBorderStyle("black")}
+                className="w-full text-xs"
+              >
+                Noir
+              </Button>
+              <Button
+                variant={borderStyle === "pastel" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setBorderStyle("pastel")}
+                className="w-full text-xs"
+              >
+                Soft
+              </Button>
+            </div>
+          </div>
+
+          {/* 3. Color Mode */}
+           <div className="space-y-2">
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider">Filter</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  variant={colorMode === "color" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setColorMode("color")}
+                  className="w-full text-xs"
+                >
+                  <Palette className="w-3 h-3 mr-2" />
+                  Color
+                </Button>
+                <Button
+                  variant={colorMode === "bw" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setColorMode("bw")}
+                  className="w-full text-xs"
+                >
+                  B&W
+                </Button>
+              </div>
+          </div>
+
+           {/* 4. Watermark Toggle */}
+           <div className="flex items-center justify-between py-2">
+              <Label htmlFor="watermark-mode" className="text-sm">Show Watermark</Label>
+              <Switch 
+                id="watermark-mode"
+                checked={showWatermark}
+                onCheckedChange={setShowWatermark}
+              />
+           </div>
         </div>
 
         {/* Preview */}
