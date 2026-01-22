@@ -378,6 +378,7 @@ export function CaptureMode({ onPhotosReady, onBack }: CaptureModeProps) {
               playsInline
               muted
               className="w-full h-full object-cover"
+              style={{ transform: "scaleX(-1)" }} // Mirror the preview for natural feel
             />
             
             {/* Camera loading/error state - shows permission status */}
