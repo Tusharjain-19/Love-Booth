@@ -339,7 +339,7 @@ export function CaptureMode({ onPhotosReady, onBack }: CaptureModeProps) {
   if (mode === "camera") {
     return (
       <div 
-        className="min-h-screen flex flex-col bg-cover bg-center bg-no-repeat relative"
+        className="min-h-screen flex flex-col bg-cover bg-center bg-no-repeat relative pt-safe pb-safe pl-safe pr-safe"
         style={{ backgroundImage: `url(${appBackground})` }}
       >
         {/* Fade overlay */}
@@ -470,7 +470,7 @@ export function CaptureMode({ onPhotosReady, onBack }: CaptureModeProps) {
   // Choose Mode (Default)
   return (
     <div 
-      className="min-h-screen flex flex-col bg-cover bg-center bg-no-repeat relative"
+      className="min-h-screen flex flex-col bg-cover bg-center bg-no-repeat relative pt-safe pb-safe pl-safe pr-safe"
       style={{ backgroundImage: `url(${appBackground})` }}
     >
       {/* Fade overlay */}

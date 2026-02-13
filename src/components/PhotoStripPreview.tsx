@@ -569,7 +569,7 @@ export function PhotoStripPreview({
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col pt-safe pb-safe pl-safe pr-safe">
       <header className="p-4 flex items-center justify-between">
         <Button variant="ghost" onClick={onBack}>
           <ArrowLeft className="w-5 h-5 mr-2" />

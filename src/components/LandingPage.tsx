@@ -12,8 +12,8 @@ interface LandingPageProps {
 
 export function LandingPage({ onStart }: LandingPageProps) {
   return (
-    <div 
-      className="min-h-screen flex flex-col bg-cover bg-center bg-no-repeat relative"
+    <div
+      className="min-h-screen flex flex-col bg-cover bg-center bg-no-repeat relative pt-safe pb-safe pl-safe pr-safe"
       style={{ backgroundImage: `url(${appBackground})` }}
     >
       {/* Fade overlay */}
@@ -31,8 +31,6 @@ export function LandingPage({ onStart }: LandingPageProps) {
           <h1 className="text-4xl md:text-5xl font-display font-bold text-foreground mb-4">
             Turn moments into photo strips.
           </h1>
-          
-
 
           <Button
             onClick={onStart}
@@ -54,7 +52,11 @@ export function LandingPage({ onStart }: LandingPageProps) {
               <p className="text-sm text-muted-foreground">Secure & Private</p>
             </div>
             <div className="flex flex-col items-center">
-              <img src={iconDownload} alt="Download" className="w-10 h-10 mb-2" />
+              <img
+                src={iconDownload}
+                alt="Download"
+                className="w-10 h-10 mb-2"
+              />
               <p className="text-sm text-muted-foreground">HD Download</p>
             </div>
           </div>
@@ -63,14 +65,12 @@ export function LandingPage({ onStart }: LandingPageProps) {
 
       {/* Footer */}
       <footer className="p-6 text-center space-y-2 relative z-10">
-        <p className="text-sm text-muted-foreground">
-          Made by Love Booth
-        </p>
+        <p className="text-sm text-muted-foreground">Made by Love Booth</p>
         <p className="text-xs text-muted-foreground">
-          <a 
-            href="https://lovebooth-sigma.vercel.app/" 
-            target="_blank" 
-            rel="noopener noreferrer" 
+          <a
+            href="https://lovebooth-sigma.vercel.app/"
+            target="_blank"
+            rel="noopener noreferrer"
             className="text-primary hover:underline"
           >
             lovebooth-sigma.vercel.app
@@ -81,8 +81,8 @@ export function LandingPage({ onStart }: LandingPageProps) {
         </p>
         <p className="text-xs text-muted-foreground">
           For feedback, mail to{" "}
-          <a 
-            href="mailto:feedback.lumina@gmail.com" 
+          <a
+            href="mailto:feedback.lumina@gmail.com"
             className="text-primary hover:underline"
           >
             feedback.lumina@gmail.com
